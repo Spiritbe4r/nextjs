@@ -1,10 +1,11 @@
-import axios, {AxiosRequestConfig, Method, AxiosResponse} from 'axios';
+import axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig} from 'axios';
 
 
 type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
 interface HttpClientConfig extends AxiosRequestConfig {
     method: HttpMethod;
+    requireToken: string;
 }
 
 export interface HttpClient {
@@ -21,7 +22,6 @@ export interface HttpClient {
 
 const axiosClient = (baseURL: string): HttpClient => {
     const httpClient = axios.create({baseURL: baseURL});
-
 
     const httpMethods: Partial<HttpClient> = {};
 
@@ -50,5 +50,27 @@ const axiosClient = (baseURL: string): HttpClient => {
 
     return httpMethods as HttpClient;
 };
+
+
+function initializeInterceptors(httpClient: AxiosInstance): void {
+    httpClient.interceptors.request.use(
+        (config: any): InternalAxiosRequestConfig => {
+
+
+            if (config.headers.requiresToken) {
+                //const token = loadFromLocalStorage('token');
+                config.headers = {
+                    ...config.headers,
+                    Authorization: `Bearer ${"token"}`,
+                };
+            }
+            return config;
+        },
+        (error: AxiosError) => {
+            // Handle request errors
+            return Promise.reject(error);
+        }
+    );
+}
 
 export default axiosClient;
